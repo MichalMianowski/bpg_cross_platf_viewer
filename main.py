@@ -22,7 +22,8 @@ class UI(QMainWindow):
         self.button_prev = self.findChild(QPushButton, "pushButton_prev")
         self.label = self.findChild(QLabel, "label")
 
-        self.actionOpen.triggered.connect(self.open_file)
+        self.action_open.triggered.connect(self.open_file)
+        self.action_save.triggered.connect(self.save_file)
         self.button_next.clicked.connect(self.next)
         self.button_prev.clicked.connect(self.prev)
         self.image_array = []
@@ -42,15 +43,32 @@ class UI(QMainWindow):
         self.last_file_id = self.list_of_files.index(Path(fname[0]))
         self.open_image()
 
+    def save_file(self):
+        name = QFileDialog.getSaveFileName(self, 'Save File', filter='Images (*.png *.jpg)')
+        file = open(name[0], 'w')
+        print(file)
+        # print(name)
+
     def open_image(self):
         self.image_array = imageio.imread(self.list_of_files[self.last_file_id])
         if Image.MAX_IMAGE_PIXELS < self.image_array.size:
             print("jest mniejszy limit!")
             Image.MAX_IMAGE_PIXELS = self.image_array.size
-        im = Image.fromarray(self.image_array)
-        im.convert('RGB')
-        data = im.tobytes('raw', 'RGB')
-        qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGB888)
+        # opcja A
+        # im = Image.fromarray(self.image_array)
+        # im.convert('RGB')
+        # data = im.tobytes('raw', 'RGB')
+        # qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGB888)
+
+        # opcja B
+        # qim = QImage(self.image_array, self.image_array.shape[1], self.image_array.shape[0], QImage.Format_RGB888)
+
+        # opcja C
+        cvImg = self.image_array
+        height, width, channel = cvImg.shape
+        bytesPerLine = 3 * width
+        qim = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_RGB888)
+
         self.pixmap = QPixmap(QPixmap.fromImage(qim))
         self.pixmap = self.pixmap.scaled(self.label.size() , QtCore.Qt.KeepAspectRatio)
         self.label.setPixmap(self.pixmap)
@@ -89,3 +107,9 @@ class UI(QMainWindow):
 app = QApplication(sys.argv)
 UIWindow = UI()
 app.exec_()
+
+# TODO dodaj na dole pasek z nazwą obecnie oglądanego pliku
+# TODO ogarnij wczytywanie wszystkich plików bez krzywizny i dzikich pikseli
+# TODO dokończ zapisywanie do wskazanego formatu
+# TODO dopiero później ogranicz możliwości wyboru formatu do tych wczytanych z imageio
+# TODO dodaj opcję domyślną zapisywania obrazu
