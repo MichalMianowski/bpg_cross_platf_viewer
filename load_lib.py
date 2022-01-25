@@ -1,14 +1,5 @@
 from ctypes import CDLL, Structure, c_int, POINTER, c_char_p
 from sys import platform
-import numpy as np
-
-import imageio
-import matplotlib
-from pathlib import Path
-
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-
 
 shared_lib_path = "./bpg_load_save_lib.so"
 if platform.startswith('win32'):
