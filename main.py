@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QLabel, QFileDialog, QAction
+from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QLabel, QFileDialog, QAction, QStatusBar
 from PyQt5 import uic, QtCore
 from PyQt5.QtGui import QPixmap, QImage, QPicture
 import sys
@@ -10,9 +10,6 @@ from pathlib import Path
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.image as mpimg
-
-# Image has some pixels limit - when images are larger the browser is slow
-# maybe load 3 images further and prev ?
 
 
 class UI(QMainWindow):
@@ -26,6 +23,7 @@ class UI(QMainWindow):
         self.button_next = self.findChild(QPushButton, "pushButton_next")
         self.button_prev = self.findChild(QPushButton, "pushButton_prev")
         self.label = self.findChild(QLabel, "label")
+        self.status_bar = self.findChild(QStatusBar, "statusbar")
         self.figure = Figure(facecolor='None')
         self.canvas = FigureCanvas(self.figure)
         self.gridLayout.addWidget(self.canvas, 0, 0, 1, 1)
@@ -59,49 +57,10 @@ class UI(QMainWindow):
         print(file)
         # print(name)
 
-    '''
     def open_image(self):
-        self.image_array = imageio.imread(self.list_of_files[self.last_file_id])
-        print("image readed")
-        if Image.MAX_IMAGE_PIXELS < self.image_array.size:
-            print("jest mniejszy limit!")
-            Image.MAX_IMAGE_PIXELS = self.image_array.size
-        # # opcja A
-        # im = Image.fromarray(self.image_array)
-        # im.convert('RGB')
-        # data = im.tobytes('raw', 'RGB')
-        # qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGB888)
-        # self.pixmap = QPixmap(QPixmap.fromImage(qim))
-        # self.label.setPixmap(self.pixmap)
-
-        # # opcja B
-        # qim = QImage(self.image_array, self.image_array.shape[1], self.image_array.shape[0], QImage.Format_RGB888)
-        # self.pixmap = QPixmap(QPixmap.fromImage(qim))
-        # self.label.setPixmap(self.pixmap)
-
-        # # opcja C
-        # cvImg = self.image_array
-        # height, width, channel = cvImg.shape
-        # bytesPerLine = 3 * width
-        # qim = QImage(cvImg.data, width, height, bytesPerLine, QImage.Format_RGB888)
-
-        # self.pixmap = QPixmap(QPixmap.fromImage(qim))
-        # self.pixmap = self.pixmap.scaled(self.label.size() , QtCore.Qt.KeepAspectRatio)
-        # self.label.setPixmap(self.pixmap)
-
-        # opcja D
-        from PIL import Image as Image_pil
-        image_from_array = Image_pil.fromarray(self.image_array)
-        self.pixmap = QPixmap(image_from_array)
-        # picture = QPicture(image_from_array)
-        self.label.setPicture(image_from_array)
-    '''
-
-    def open_image(self):
+        self.status_bar.showMessage(self.list_of_files[self.last_file_id].parts[-1])
         try:
             self.image_array = imageio.imread(self.list_of_files[self.last_file_id])
-            # # img = mpimg.imread('image_test_2.jpg')
-            # img = imageio.imread('image_test_2.jpg')
 
             self.ax.imshow(self.image_array)
             if len(self.image_array.shape) == 2:
@@ -109,7 +68,6 @@ class UI(QMainWindow):
 
             self.ax.set_axis_off()
             self.canvas.draw()
-            # self.setCentralWidget(self.canvas)
         except:
             print(f"error in reading: {self.list_of_files[self.last_file_id]}")
             self.next_index()
@@ -119,7 +77,6 @@ class UI(QMainWindow):
         pass
 
     def next(self):
-        print("open next file")
         self.next_index()
         try:
             self.open_image()
@@ -127,7 +84,6 @@ class UI(QMainWindow):
             self.next()
 
     def prev(self):
-        print("open prev file")
         self.prev_index()
         try:
             self.open_image()
@@ -147,13 +103,16 @@ class UI(QMainWindow):
             self.last_file_id = len(self.list_of_files)-1
 
 
-
 app = QApplication(sys.argv)
 UIWindow = UI()
 app.exec_()
 
-# TODO dodaj na dole pasek z nazwą obecnie oglądanego pliku
-# TODO ogarnij wczytywanie wszystkich plików bez krzywizny i dzikich pikseli
+# [+] TODO dodaj na dole pasek z nazwą obecnie oglądanego pliku
+# [+] TODO ogarnij wczytywanie wszystkich plików bez krzywizny i dzikich pikseli
+# zapisuwanie?
 # TODO dokończ zapisywanie do wskazanego formatu
 # TODO dopiero później ogranicz możliwości wyboru formatu do tych wczytanych z imageio
 # TODO dodaj opcję domyślną zapisywania obrazu
+
+# Image has some pixels limit - when images are larger the browser is slow
+# maybe load 3 images further and prev ?
