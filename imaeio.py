@@ -2,7 +2,7 @@ import imageio
 import imageio as iio
 import visvis as vv
 from pathlib import Path
-# import bpg
+import bpg
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -10,10 +10,13 @@ import matplotlib.image as mpimg
 # img = mpimg.imread('jetplane.tif')
 img = imageio.imread('image_samples/HappyFish.jpg')
 
-# imageio.imsave(img, )
+# imageio.imsave("output.bpg", img)
+imageio.imsave("output.bpg", img, qp=29,
+            lossless=0, compress_level=8, preferred_chroma_format=444)
 # img = imageio.imread('barbara.bmp')
-imgplot = plt.imshow(img)
-plt.show()
+# imgplot = plt.imshow(img)
+a=1
+# plt.show()
 
 # vv.imshow(img)
 
