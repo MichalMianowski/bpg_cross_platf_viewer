@@ -1,3 +1,4 @@
+import imageio
 import imageio as iio
 import visvis as vv
 from pathlib import Path
@@ -5,9 +6,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-img = mpimg.imread('image_test_2.jpg')
-imgplot = plt.imshow(img)
-# plt.show()
+# img = mpimg.imread('jetplane.tif')
+img = imageio.imread('jetplane.tif')
+# img = imageio.imread('barbara.bmp')
+imgplot = plt.imshow(img, cmap='gray')
+plt.show()
 
 # vv.imshow(img)
 

@@ -26,9 +26,11 @@ class UI(QMainWindow):
         self.button_next = self.findChild(QPushButton, "pushButton_next")
         self.button_prev = self.findChild(QPushButton, "pushButton_prev")
         self.label = self.findChild(QLabel, "label")
-        self.figure = Figure()
+        self.figure = Figure(facecolor='None')
         self.canvas = FigureCanvas(self.figure)
         self.gridLayout.addWidget(self.canvas, 0, 0, 1, 1)
+        self.ax = self.figure.subplots()
+        self.ax.set_axis_off()
 
         self.action_open.triggered.connect(self.open_file)
         self.action_save.triggered.connect(self.save_file)
@@ -96,14 +98,22 @@ class UI(QMainWindow):
     '''
 
     def open_image(self):
-        self.ax = self.figure.subplots()
-        self.image_array = imageio.imread(self.list_of_files[self.last_file_id])
-        # # img = mpimg.imread('image_test_2.jpg')
-        # img = imageio.imread('image_test_2.jpg')
-        self.ax.imshow(self.image_array)
-        self.ax.set_axis_off()
-        self.canvas.draw()
-        # self.setCentralWidget(self.canvas)
+        try:
+            self.image_array = imageio.imread(self.list_of_files[self.last_file_id])
+            # # img = mpimg.imread('image_test_2.jpg')
+            # img = imageio.imread('image_test_2.jpg')
+
+            self.ax.imshow(self.image_array)
+            if len(self.image_array.shape) == 2:
+                self.ax.imshow(self.image_array, cmap='gray')
+
+            self.ax.set_axis_off()
+            self.canvas.draw()
+            # self.setCentralWidget(self.canvas)
+        except:
+            print(f"error in reading: {self.list_of_files[self.last_file_id]}")
+            self.next_index()
+            self.open_image()
 
     def save_image(self):
         pass
