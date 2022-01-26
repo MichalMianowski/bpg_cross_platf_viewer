@@ -45,8 +45,7 @@ def load_lib():
     return lib
 
 
-class BpgFormat(Format):
-
+class DummyFormat(Format):
     """BPG format created to use HEVC encoding and decoding intra frame to encode and decode images.
     This documentation is shown when the user does ``help('thisformat')``.
 
@@ -67,17 +66,14 @@ class BpgFormat(Format):
     compress_level : int
         select the compression level (1=fast, 9=slow, default = 8)
     preferred_chroma_format : int
-        set preferred chroma format for output file
-        possible values: 444, 422 or 420
 
     """
-    
+
     lib = load_lib()
 
     def _can_read(self, request):
         if request.mode[1] in (self.modes + "?"):
             if request.extension in self.extensions:
-                print("True")
                 return True
 
     def _can_write(self, request):
@@ -88,28 +84,10 @@ class BpgFormat(Format):
     # -- reader
     class Reader(Format.Reader):
         def _open(self):
+            # self._fp = self.request.get_file()  --ew tak brać filename
             filename = self.request.filename
-            decoded_image = BpgFormat.lib.load_bpg_image(str(filename).encode("utf_8"))
-            pixel_len = 3
-            if decoded_image.has_alpha:
-                pixel_len = 4
+            print(filename)
 
-            cimg = np.ndarray((decoded_image.h, decoded_image.w, pixel_len), dtype=c_uint8)
-
-            for i in range(decoded_image.h):
-                for j in range(decoded_image.w):
-                    if decoded_image.has_alpha:
-                        cimg[i][j] = [decoded_image.image_array[i][j * pixel_len],
-                                      decoded_image.image_array[i][j * pixel_len + 1],
-                                      decoded_image.image_array[i][j * pixel_len + 2],
-                                      decoded_image.image_array[i][j * pixel_len + 3]]
-                    else:
-                        cimg[i][j] = [decoded_image.image_array[i][j * pixel_len],
-                                      decoded_image.image_array[i][j * pixel_len + 1],
-                                      decoded_image.image_array[i][j * pixel_len + 2]]
-
-
-            self._data = cimg
 
         def _close(self):
             # Close the reader.
@@ -138,6 +116,7 @@ class BpgFormat(Format):
             return {}  # This format does not support meta data
 
     # -- writer
+
     class Writer(Format.Writer):
         def _open(self, flags=0):
             # Specify kwargs here. Optionally, the user-specified kwargs
@@ -166,11 +145,16 @@ class BpgFormat(Format):
 
 # Register. You register an *instance* of a Format class. Here specify:
 
-format = BpgFormat(
-    "bpg",  # short name
-    "BPG format - enc/decoding images as intra frame in HEVC",  # one line descr.
-    ".bpg",  # list of extensions
+format = DummyFormat(
+
+    "dummy",  # short name
+
+    "dummy format - enc/decoding images as intra frame in HEVC",  # one line descr.
+
+    ".dummy",  # list of extensions
+
     "iI",  # modes, characters in iIvV
+
 )
 
 formats.add_format(format)

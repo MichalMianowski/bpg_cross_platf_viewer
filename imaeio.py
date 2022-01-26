@@ -1,12 +1,16 @@
 import imageio as iio
+import visvis as vv
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+
 img = mpimg.imread('image_test_2.jpg')
 imgplot = plt.imshow(img)
-plt.show()
-#
+# plt.show()
+
+# vv.imshow(img)
+
 # images = list()
 # for file in Path("/home/mm/Pictures/").iterdir():
 #     im = iio.imread(file)
