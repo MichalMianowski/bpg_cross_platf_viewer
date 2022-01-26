@@ -37,6 +37,7 @@ class UI(QMainWindow):
         self.button_prev.clicked.connect(self.prev)
         self.image_array = []
         self.direction_next = 1
+        self.number_of_fails = 0
 
         self.show()
 
@@ -73,13 +74,18 @@ class UI(QMainWindow):
 
             self.ax.set_axis_off()
             self.canvas.draw()
+            self.number_of_fails = 0
         except:
             print(f"error in reading: {self.list_of_files[self.last_file_id]}")
-            if self.direction_next:
-                self.next_index()
+            self.number_of_fails += 1
+            if(self.number_of_fails < len(self.list_of_files)):
+                if self.direction_next:
+                    self.next_index()
+                else:
+                    self.prev_index()
+                self.open_image()
             else:
-                self.prev_index()
-            self.open_image()
+                self.status_bar.showMessage("No image file to open in this directory")
 
     def save_image(self):
         pass
