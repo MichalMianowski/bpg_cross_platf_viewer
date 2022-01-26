@@ -18,9 +18,19 @@ from ctypes import CDLL, Structure, c_int, c_uint8, POINTER, c_char_p
 from sys import platform
 
 
+class DecodedImage(Structure):
+    _fields_ = [
+        ("w", c_int),
+        ("h", c_int),
+        ("has_alpha", c_int),
+        ("is_grayscale", c_int),
+        ("image_array", POINTER(POINTER(c_int)))
+    ]
+
+
 def load_lib():
-    # shared_lib_path = "./bpg_load_save_lib.so"
-    shared_lib_path = "./bpg_load.so"
+    shared_lib_path = "./bpg_load_save_lib.so"
+    # shared_lib_path = "./bpg_load.so"
     if platform.startswith('win32'):
         shared_lib_path = "./bpg_load_save_lib.dll"
     try:
@@ -29,19 +39,10 @@ def load_lib():
     except Exception as e:
         print(e)
 
-    class DecodedImage(Structure):
-        _fields_ = [
-            ("w", c_int),
-            ("h", c_int),
-            ("has_alpha", c_int),
-            ("is_grayscale", c_int),
-            ("image_array", POINTER(POINTER(c_int)))
-        ]
-
     # arg:  str(FILEPATH).encode("utf_8")
     lib.load_bpg_image.restype = DecodedImage
-    # lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
-    # lib.save_bpg_image_with_defaults = [POINTER(DecodedImage)]
+    lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
+    lib.save_bpg_image_with_defaults = [POINTER(DecodedImage)]
 
     return lib
 
@@ -127,15 +128,45 @@ class BpgFormat(Format):
 
     # -- writer
     class Writer(Format.Writer):
-        def _open(self, flags=0):
-            # Specify kwargs here. Optionally, the user-specified kwargs
-            # can also be accessed via the request.kwargs object.
-            #
-            # The request object provides two ways to write the data.
-            # Use just one:
-            #  - Use request.get_file() for a file object (preferred)
-            #  - Use request.get_local_filename() for a file on the system
-            self._fp = self.request.get_file()
+        def _open(self, filename, image_array, qp=29,
+                lossless=0, compress_level=8, preferred_chroma_format=444):
+
+            c_outfilename = str(filename).encode("utf_8")
+            decoded_image = DecodedImage()
+
+            decoded_image.h = image_array.shape[0]
+            decoded_image.w = image_array.shape[1]
+
+            if len(image_array.shape) == 2:
+                pixel_len = 1
+                decoded_image.is_grayscale = 1
+            else:
+                pixel_len = image_array.shape[3]
+                decoded_image.is_grayscale = 0
+
+            if pixel_len == 4:
+                decoded_image.has_alpha = 1
+            else:
+                decoded_image.has_alpha = 0
+
+            c_decoded_array = [[0 for x in range(decoded_image.w*pixel_len)] for y in range(decoded_image.h)]
+
+            if pixel_len != 1:
+                for y in range(decoded_image.h):
+                    for x in range(decoded_image.w):
+                        c_decoded_array[y][x*pixel_len] = image_array[y][x][0]
+                        c_decoded_array[y][x*pixel_len+1] = image_array[y][x][1]
+                        c_decoded_array[y][x*pixel_len+2] = image_array[y][x][2]
+                        if decoded_image.has_alpha:
+                            c_decoded_array[y][x*pixel_len+3] = image_array[y][x][3]
+            else:
+                c_decoded_array = image_array.ctypes.data_as(POINTER(c_int))
+
+            decoded_image.image_array = c_decoded_array.ctypes.data_as(POINTER(POINTER(c_int)))
+
+            self._fp = self.request.get_local_filename()
+            BpgFormat.lib.save_bpg_image(self._fp, decoded_image, c_outfilename, qp,
+                                         lossless, compress_level, preferred_chroma_format)
 
         def _close(self):
             # Close the reader.
