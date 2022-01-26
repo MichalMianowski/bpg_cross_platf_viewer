@@ -19,7 +19,7 @@ class UI(QMainWindow):
         self.list_of_files = list()
         self.last_file_id = 0
 
-        uic.loadUi("window_2.ui", self)
+        uic.loadUi("window.ui", self)
 
         self.button_next = self.findChild(QPushButton, "pushButton_next")
         self.button_prev = self.findChild(QPushButton, "pushButton_prev")
@@ -39,11 +39,6 @@ class UI(QMainWindow):
         self.number_of_fails = 0
 
         self.show()
-
-    # def resizeEvent(self, event):
-    #     self.pixmap = self.pixmap.scaled(self.width(), self.height())
-    #     self.label.setPixmap(self.pixmap)
-    #     self.label.resize(self.width(), self.height())
 
     def open_file(self):
         fname = QFileDialog.getOpenFileName(self, "Open File", "All (*)")
