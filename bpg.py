@@ -29,8 +29,8 @@ class DecodedImage(Structure):
 
 
 def load_lib():
-    shared_lib_path = "./bpg_load_save_lib.so"
-    # shared_lib_path = "./bpg_load.so"
+    # shared_lib_path = "./bpg_load_save_lib.so"
+    shared_lib_path = "./bpg_load.so"
     if platform.startswith('win32'):
         shared_lib_path = "./bpg_load_save_lib.dll"
     try:
@@ -41,8 +41,8 @@ def load_lib():
 
     # arg:  str(FILEPATH).encode("utf_8")
     lib.load_bpg_image.restype = DecodedImage
-    lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
-    lib.save_bpg_image_with_defaults = [POINTER(DecodedImage)]
+    # lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
+    # lib.save_bpg_image_with_defaults = [POINTER(DecodedImage)]
 
     return lib
 
@@ -164,8 +164,8 @@ class BpgFormat(Format):
                 if kwargs['preferred_chroma_format'] in {444, 422, 420}:
                     lossless = kwargs['preferred_chroma_format']
 
-            BpgFormat.lib.save_bpg_image(self._decoded_image, c_outfilename, qp,
-                                         lossless, compress_level, preferred_chroma_format)
+            # BpgFormat.lib.save_bpg_image(self._decoded_image, c_outfilename, qp,
+            #                              lossless, compress_level, preferred_chroma_format)
 
         def _close(self):
             # Close the reader.

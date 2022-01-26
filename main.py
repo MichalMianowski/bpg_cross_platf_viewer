@@ -35,7 +35,6 @@ class UI(QMainWindow):
         self.action_save.triggered.connect(self.save_file)
         self.button_next.clicked.connect(self.next)
         self.button_prev.clicked.connect(self.prev)
-        self.image_array = []
         self.direction_next = 1
         self.number_of_fails = 0
 
@@ -57,10 +56,13 @@ class UI(QMainWindow):
         self.open_image()
 
     def save_file(self):
-        name = QFileDialog.getSaveFileName(self, 'Save File', filter='Images (*.png *.jpg)')
-        file = open(name[0], 'w')
-        print(file)
-        # print(name)
+        filepath = QFileDialog.getSaveFileName(self, 'Save File As')[0]
+        try:
+            imageio.imsave(filepath, self.image_array)
+            self.status_bar.showMessage(f"Image saved: {filepath.split()[-1]}")
+        except:
+            self.status_bar.showMessage(f"Can not save image")
+
 
     def open_image(self):
         self.status_bar.showMessage(self.list_of_files[self.last_file_id].parts[-1])
@@ -76,7 +78,7 @@ class UI(QMainWindow):
             self.canvas.draw()
             self.number_of_fails = 0
         except:
-            print(f"error in reading: {self.list_of_files[self.last_file_id]}")
+            print(f"Can not read: {self.list_of_files[self.last_file_id]}")
             self.number_of_fails += 1
             if(self.number_of_fails < len(self.list_of_files)):
                 if self.direction_next:
@@ -86,9 +88,6 @@ class UI(QMainWindow):
                 self.open_image()
             else:
                 self.status_bar.showMessage("No image file to open in this directory")
-
-    def save_image(self):
-        pass
 
     def next(self):
         self.direction_next = 1
