@@ -2,14 +2,15 @@ import imageio
 import imageio as iio
 import visvis as vv
 from pathlib import Path
+import bpg
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 # img = mpimg.imread('jetplane.tif')
-img = imageio.imread('jetplane.tif')
+img = imageio.imread('image_samples/lena_q36.bpg')
 # img = imageio.imread('barbara.bmp')
-imgplot = plt.imshow(img, cmap='gray')
+imgplot = plt.imshow(img)
 plt.show()
 
 # vv.imshow(img)

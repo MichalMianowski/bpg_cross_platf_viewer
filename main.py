@@ -6,6 +6,7 @@ from PIL import Image
 import imageio, numpy
 import os
 from pathlib import Path
+import bpg
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -35,6 +36,7 @@ class UI(QMainWindow):
         self.button_next.clicked.connect(self.next)
         self.button_prev.clicked.connect(self.prev)
         self.image_array = []
+        self.direction_next = 1
 
         self.show()
 
@@ -46,6 +48,8 @@ class UI(QMainWindow):
     def open_file(self):
         fname = QFileDialog.getOpenFileName(self, "Open File", "All (*)")
         parent_directory = os.path.split(fname[0])
+        if (self.list_of_files):
+            self.list_of_files.clear()
         for file in Path(parent_directory[0]).iterdir():
             self.list_of_files.append(file)
         self.last_file_id = self.list_of_files.index(Path(fname[0]))
@@ -59,6 +63,7 @@ class UI(QMainWindow):
 
     def open_image(self):
         self.status_bar.showMessage(self.list_of_files[self.last_file_id].parts[-1])
+        self.ax.cla()
         try:
             self.image_array = imageio.imread(self.list_of_files[self.last_file_id])
 
@@ -70,13 +75,17 @@ class UI(QMainWindow):
             self.canvas.draw()
         except:
             print(f"error in reading: {self.list_of_files[self.last_file_id]}")
-            self.next_index()
+            if self.direction_next:
+                self.next_index()
+            else:
+                self.prev_index()
             self.open_image()
 
     def save_image(self):
         pass
 
     def next(self):
+        self.direction_next = 1
         self.next_index()
         try:
             self.open_image()
@@ -84,6 +93,7 @@ class UI(QMainWindow):
             self.next()
 
     def prev(self):
+        self.direction_next = 0
         self.prev_index()
         try:
             self.open_image()

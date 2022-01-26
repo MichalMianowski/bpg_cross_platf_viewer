@@ -19,7 +19,8 @@ from sys import platform
 
 
 def load_lib():
-    shared_lib_path = "./bpg_load_save_lib.so"
+    # shared_lib_path = "./bpg_load_save_lib.so"
+    shared_lib_path = "./bpg_load.so"
     if platform.startswith('win32'):
         shared_lib_path = "./bpg_load_save_lib.dll"
     try:
@@ -39,8 +40,8 @@ def load_lib():
 
     # arg:  str(FILEPATH).encode("utf_8")
     lib.load_bpg_image.restype = DecodedImage
-    lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
-    lib.save_bpg_image_with_defaults = [POINTER(DecodedImage)]
+    # lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
+    # lib.save_bpg_image_with_defaults = [POINTER(DecodedImage)]
 
     return lib
 
@@ -77,7 +78,6 @@ class BpgFormat(Format):
     def _can_read(self, request):
         if request.mode[1] in (self.modes + "?"):
             if request.extension in self.extensions:
-                print("True")
                 return True
 
     def _can_write(self, request):
@@ -89,27 +89,7 @@ class BpgFormat(Format):
     class Reader(Format.Reader):
         def _open(self):
             filename = self.request.filename
-            decoded_image = BpgFormat.lib.load_bpg_image(str(filename).encode("utf_8"))
-            pixel_len = 3
-            if decoded_image.has_alpha:
-                pixel_len = 4
-
-            cimg = np.ndarray((decoded_image.h, decoded_image.w, pixel_len), dtype=c_uint8)
-
-            for i in range(decoded_image.h):
-                for j in range(decoded_image.w):
-                    if decoded_image.has_alpha:
-                        cimg[i][j] = [decoded_image.image_array[i][j * pixel_len],
-                                      decoded_image.image_array[i][j * pixel_len + 1],
-                                      decoded_image.image_array[i][j * pixel_len + 2],
-                                      decoded_image.image_array[i][j * pixel_len + 3]]
-                    else:
-                        cimg[i][j] = [decoded_image.image_array[i][j * pixel_len],
-                                      decoded_image.image_array[i][j * pixel_len + 1],
-                                      decoded_image.image_array[i][j * pixel_len + 2]]
-
-
-            self._data = cimg
+            self._decoded_image = BpgFormat.lib.load_bpg_image(str(filename).encode("utf_8"))
 
         def _close(self):
             # Close the reader.
@@ -120,16 +100,24 @@ class BpgFormat(Format):
             return 1
 
         def _get_data(self, index):
-            # Return the data and meta data for the given index
-            if index >= self._length:
-                raise IndexError("Image index %i > %i" % (index, self._length))
-            # Read all bytes
-            if self._data is None:
-                self._data = self._fp.read()
-            # Put in a numpy array
-            im = np.frombuffer(self._data, "uint8")
-            im.shape = len(im), 1
-            # Return array and dummy meta data
+            self._pixel_len = 3
+            if self._decoded_image.has_alpha:
+                self._pixel_len = 4
+
+            im = np.ndarray((self._decoded_image.h, self._decoded_image.w, self._pixel_len), dtype=c_uint8)
+
+            for i in range(self._decoded_image.h):
+                for j in range(self._decoded_image.w):
+                    if self._decoded_image.has_alpha:
+                        im[i][j] = [self._decoded_image.image_array[i][j * self._pixel_len],
+                                      self._decoded_image.image_array[i][j * self._pixel_len + 1],
+                                      self._decoded_image.image_array[i][j * self._pixel_len + 2],
+                                      self._decoded_image.image_array[i][j * self._pixel_len + 3]]
+                    else:
+                        im[i][j] = [self._decoded_image.image_array[i][j * self._pixel_len],
+                                      self._decoded_image.image_array[i][j * self._pixel_len + 1],
+                                      self._decoded_image.image_array[i][j * self._pixel_len + 2]]
+
             return im, {}
 
         def _get_meta_data(self, index):
@@ -155,17 +143,17 @@ class BpgFormat(Format):
             pass
 
         def _append_data(self, im, meta):
-            # Process the given data and meta data.
-            raise RuntimeError("The dummy format cannot write image data.")
+            # # Process the given data and meta data.
+            # raise RuntimeError("The dummy format cannot write image data.")
+            pass
 
         def set_meta_data(self, meta):
             # Process the given meta data (global for all images)
             # It is not mandatory to support this.
-            raise RuntimeError("The dummy format cannot write meta data.")
-
+            # raise RuntimeError("The dummy format cannot write meta data.")
+            pass
 
 # Register. You register an *instance* of a Format class. Here specify:
-
 format = BpgFormat(
     "bpg",  # short name
     "BPG format - enc/decoding images as intra frame in HEVC",  # one line descr.
