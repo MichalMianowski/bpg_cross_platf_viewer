@@ -35,7 +35,7 @@ def load_lib():
         shared_lib_path = "./bpg_load_save_lib.dll"
     try:
         lib = CDLL(shared_lib_path)
-        print("Successfully loaded ", lib)
+        # print("Successfully loaded ", lib)
     except Exception as e:
         print(e)
 
@@ -145,7 +145,7 @@ class BpgFormat(Format):
             self.c_outfilename = str(self.request.filename).encode("utf_8")
 
             # DEFAULT VALUES
-            self.qp = 29,
+            self.qp = 29
             self.lossless = 0
             self.compress_level = 8
             self.preferred_chroma_format = 444
@@ -187,14 +187,13 @@ class BpgFormat(Format):
                 has_alpha = 0
 
             line_len = w * pixel_len
-            c_decoded_array = np.zeros(h * line_len,
-                                       dtype=c_int)
+            c_decoded_array = np.zeros(h * line_len, dtype=c_int)
 
             if pixel_len != 1:
                 for y in range(h):
                     for x in range(w):
                         for i in range(pixel_len):
-                            c_decoded_array[y * line_len + x + i] = im[y][x][i]
+                            c_decoded_array[y*line_len + x*pixel_len + i] = im[y][x][i]
             else:
                 for y in range(h):
                     for x in range(w):
@@ -206,7 +205,6 @@ class BpgFormat(Format):
             self._decoded_image.has_alpha = has_alpha
             self._decoded_image.is_grayscale = is_grayscale
             self._decoded_image.raw_data = c_decoded_array.ctypes.data_as(POINTER(c_int))
-
 
             BpgFormat.lib.save_bpg_image(pointer(self._decoded_image), self.c_outfilename, self.qp,
                                          self.lossless, self.compress_level, self.preferred_chroma_format)
@@ -228,3 +226,4 @@ format = BpgFormat(
 )
 
 formats.add_format(format)
+print("Added BPG format to imageio")

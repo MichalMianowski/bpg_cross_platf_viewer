@@ -52,13 +52,12 @@ class UI(QMainWindow):
 
     def save_file(self):
         filepath = QFileDialog.getSaveFileName(self, 'Save File As')[0]
-        # try:
-        #     imageio.imsave(filepath, self.image_array)
-        #     self.status_bar.showMessage(f"Image saved: {filepath.split()[-1]}")
-        # except Exception as e:
-        #     print(e)
-        #     self.status_bar.showMessage(f"Can not save image")
-        imageio.imsave(filepath, self.image_array)
+        try:
+            imageio.imsave(filepath, self.image_array)
+            self.status_bar.showMessage(f"Image saved: {filepath.split()[-1]}")
+        except Exception as e:
+            print(e)
+            self.status_bar.showMessage(f"Can not save image - check ending of file")
 
 
     def open_image(self):
@@ -118,13 +117,3 @@ class UI(QMainWindow):
 app = QApplication(sys.argv)
 UIWindow = UI()
 app.exec_()
-
-# [+] TODO dodaj na dole pasek z nazwą obecnie oglądanego pliku
-# [+] TODO ogarnij wczytywanie wszystkich plików bez krzywizny i dzikich pikseli
-# zapisuwanie?
-# TODO dokończ zapisywanie do wskazanego formatu
-# TODO dopiero później ogranicz możliwości wyboru formatu do tych wczytanych z imageio
-# TODO dodaj opcję domyślną zapisywania obrazu
-
-# Image has some pixels limit - when images are larger the browser is slow
-# maybe load 3 images further and prev ?

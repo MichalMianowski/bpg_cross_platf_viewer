@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 # img = mpimg.imread('jetplane.tif')
-img = imageio.imread('image_samples/HappyFish.jpg')
+# img = imageio.imread('image_samples/tulips.png')
+# img = imageio.imread('image_samples/barbara.bmp')
+# img = imageio.imread('image_samples/HappyFish.jpg')
+img = imageio.imread('image_samples/pinguin-2.png')
 
 # imageio.imsave("output.bpg", img)
 imageio.imsave("output.bpg", img, qp=29,
