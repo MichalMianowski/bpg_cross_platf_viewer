@@ -1,16 +1,13 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QLabel, QFileDialog, QAction, QStatusBar
-from PyQt5 import uic, QtCore
-from PyQt5.QtGui import QPixmap, QImage, QPicture
+from PyQt5 import uic
 import sys
-from PIL import Image
-import imageio, numpy
+import imageio
 import os
 from pathlib import Path
 import bpg
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import matplotlib.image as mpimg
 
 
 class UI(QMainWindow):
@@ -43,12 +40,14 @@ class UI(QMainWindow):
     def open_file(self):
         fname = QFileDialog.getOpenFileName(self, "Open File", "All (*)")
         parent_directory = os.path.split(fname[0])
-        if (self.list_of_files):
-            self.list_of_files.clear()
-        for file in Path(parent_directory[0]).iterdir():
-            self.list_of_files.append(file)
-        self.last_file_id = self.list_of_files.index(Path(fname[0]))
-        self.open_image()
+        if fname != ('', ''):
+            if (self.list_of_files):
+                self.list_of_files.clear()
+            for file in Path(parent_directory[0]).iterdir():
+                if file.name[0] != '.':
+                    self.list_of_files.append(file)
+            self.last_file_id = self.list_of_files.index(Path(fname[0]))
+            self.open_image()
 
     def save_file(self):
         filepath = QFileDialog.getSaveFileName(self, 'Save File As')[0]

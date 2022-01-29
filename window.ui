@@ -68,6 +68,9 @@
           <property name="text">
            <string>Prev</string>
           </property>
+          <property name="shortcut">
+           <string>Left</string>
+          </property>
          </widget>
         </item>
         <item>
@@ -87,6 +90,9 @@
          <widget class="QPushButton" name="pushButton_next">
           <property name="text">
            <string>Next</string>
+          </property>
+          <property name="shortcut">
+           <string>Right</string>
           </property>
          </widget>
         </item>
