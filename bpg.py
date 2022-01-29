@@ -14,7 +14,7 @@ import numpy as np
 from imageio import formats
 from imageio.core import Format
 
-from ctypes import CDLL, Structure, c_int, c_uint8, POINTER, c_char_p
+from ctypes import CDLL, Structure, c_int, c_uint8, POINTER, c_char_p, pointer
 from sys import platform
 
 
@@ -22,15 +22,15 @@ class DecodedImage(Structure):
     _fields_ = [
         ("w", c_int),
         ("h", c_int),
+        ("pixel_len", c_int),
         ("has_alpha", c_int),
         ("is_grayscale", c_int),
-        ("image_array", POINTER(POINTER(c_int)))
+        ("raw_data", POINTER(c_int))
     ]
 
 
 def load_lib():
-    # shared_lib_path = "./bpg_load_save_lib.so"
-    shared_lib_path = "./bpg_load.so"
+    shared_lib_path = "./bpg_load_save_lib.so"
     if platform.startswith('win32'):
         shared_lib_path = "./bpg_load_save_lib.dll"
     try:
@@ -41,8 +41,9 @@ def load_lib():
 
     # arg:  str(FILEPATH).encode("utf_8")
     lib.load_bpg_image.restype = DecodedImage
-    # lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
-    # lib.save_bpg_image_with_defaults = [POINTER(DecodedImage)]
+
+    lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
+    lib.save_bpg_image_with_defaults.argtype = [POINTER(DecodedImage)]
 
     return lib
 
@@ -99,23 +100,21 @@ class BpgFormat(Format):
             return 1
 
         def _get_data(self, index):
-            self._pixel_len = 3
-            if self._decoded_image.has_alpha:
-                self._pixel_len = 4
+            pixel_len = self._decoded_image.pixel_len
+            line_len = pixel_len * self._decoded_image.w
+            im = np.ndarray((self._decoded_image.h, self._decoded_image.w, pixel_len), dtype=c_int)
 
-            im = np.ndarray((self._decoded_image.h, self._decoded_image.w, self._pixel_len), dtype=c_uint8)
-
-            for i in range(self._decoded_image.h):
-                for j in range(self._decoded_image.w):
+            for y in range(self._decoded_image.h):
+                for x in range(self._decoded_image.w):
                     if self._decoded_image.has_alpha:
-                        im[i][j] = [self._decoded_image.image_array[i][j * self._pixel_len],
-                                      self._decoded_image.image_array[i][j * self._pixel_len + 1],
-                                      self._decoded_image.image_array[i][j * self._pixel_len + 2],
-                                      self._decoded_image.image_array[i][j * self._pixel_len + 3]]
+                        im[y][x] = [self._decoded_image.raw_data[y*line_len + x*pixel_len], 
+                                    self._decoded_image.raw_data[y*line_len + x*pixel_len + 1],
+                                    self._decoded_image.raw_data[y*line_len + x*pixel_len + 2],
+                                    self._decoded_image.raw_data[y*line_len + x*pixel_len + 3]]
                     else:
-                        im[i][j] = [self._decoded_image.image_array[i][j * self._pixel_len],
-                                      self._decoded_image.image_array[i][j * self._pixel_len + 1],
-                                      self._decoded_image.image_array[i][j * self._pixel_len + 2]]
+                        im[y][x] = [self._decoded_image.raw_data[y*line_len + x*pixel_len],
+                                    self._decoded_image.raw_data[y*line_len + x*pixel_len + 1],
+                                    self._decoded_image.raw_data[y*line_len + x*pixel_len + 2]]
 
             return im, {}
 
@@ -143,29 +142,26 @@ class BpgFormat(Format):
     """
     class Writer(Format.Writer):
         def _open(self, **kwargs):
-            c_outfilename = str(self.request.filename).encode("utf_8")
+            self.c_outfilename = str(self.request.filename).encode("utf_8")
 
             # DEFAULT VALUES
-            qp = 29,
-            lossless = 0
-            compress_level = 8
-            preferred_chroma_format = 444
+            self.qp = 29,
+            self.lossless = 0
+            self.compress_level = 8
+            self.preferred_chroma_format = 444
 
             if 'qp' in kwargs.keys():
                 if (kwargs['qp'] >=0) and (kwargs['qp'] <= 51):
-                    qp = kwargs['qp']
+                    self.qp = kwargs['qp']
             if 'lossless' in kwargs.keys():
                 if kwargs['lossless'] in {0, 1}:
-                    lossless = kwargs['lossless']
+                    self.lossless = kwargs['lossless']
             if 'compress_level' in kwargs.keys():
                 if (kwargs['compress_level'] >=1) and (kwargs['compress_level'] <= 9):
-                    compress_level = kwargs['compress_level']
+                    self.compress_level = kwargs['compress_level']
             if 'preferred_chroma_format' in kwargs.keys():
                 if kwargs['preferred_chroma_format'] in {444, 422, 420}:
-                    lossless = kwargs['preferred_chroma_format']
-
-            # BpgFormat.lib.save_bpg_image(self._decoded_image, c_outfilename, qp,
-            #                              lossless, compress_level, preferred_chroma_format)
+                    self.preferred_chroma_format = kwargs['preferred_chroma_format']
 
         def _close(self):
             # Close the reader.
@@ -175,35 +171,46 @@ class BpgFormat(Format):
         def _append_data(self, im, meta):
             self._decoded_image = DecodedImage()
 
-            self._decoded_image.h = im.shape[0]
-            self._decoded_image.w = im.shape[1]
+            h = im.shape[0]
+            w = im.shape[1]
 
             if len(im.shape) == 2:
                 pixel_len = 1
-                self._decoded_image.is_grayscale = 1
+                is_grayscale = 1
             else:
                 pixel_len = im.shape[2]
-                self._decoded_image.is_grayscale = 0
+                is_grayscale = 0
 
             if pixel_len == 4:
-                self._decoded_image.has_alpha = 1
+                has_alpha = 1
             else:
-                self._decoded_image.has_alpha = 0
+                has_alpha = 0
 
-            c_decoded_array = np.zeros((self._decoded_image.h, self._decoded_image.w*pixel_len, pixel_len), dtype=c_uint8)
+            line_len = w * pixel_len
+            c_decoded_array = np.zeros(h * line_len,
+                                       dtype=c_int)
 
             if pixel_len != 1:
-                for y in range(self._decoded_image.h):
-                    for x in range(self._decoded_image.w):
-                        c_decoded_array[y][x*pixel_len] = im[y][x][0]
-                        c_decoded_array[y][x*pixel_len + 1] = im[y][x][1]
-                        c_decoded_array[y][x*pixel_len + 2] = im[y][x][2]
-                        if self._decoded_image.has_alpha:
-                            c_decoded_array[y][x*pixel_len + 3] = im[y][x][3]
+                for y in range(h):
+                    for x in range(w):
+                        for i in range(pixel_len):
+                            c_decoded_array[y * line_len + x + i] = im[y][x][i]
             else:
-                c_decoded_array = im.ctypes.data_as(POINTER(c_int))
+                for y in range(h):
+                    for x in range(w):
+                        c_decoded_array[y * line_len + x] = im[y][x]
 
-            self._decoded_image.im = c_decoded_array.ctypes.data_as(POINTER(POINTER(c_int)))
+            self._decoded_image.h = h
+            self._decoded_image.w = w
+            self._decoded_image.pixel_len = pixel_len
+            self._decoded_image.has_alpha = has_alpha
+            self._decoded_image.is_grayscale = is_grayscale
+            self._decoded_image.raw_data = c_decoded_array.ctypes.data_as(POINTER(c_int))
+
+
+            BpgFormat.lib.save_bpg_image(pointer(self._decoded_image), self.c_outfilename, self.qp,
+                                         self.lossless, self.compress_level, self.preferred_chroma_format)
+            # BpgFormat.lib.save_bpg_image_with_defaults(pointer(self._decoded_image))
 
     def set_meta_data(self, meta):
             # Process the given meta data (global for all images)

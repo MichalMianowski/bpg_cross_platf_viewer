@@ -52,11 +52,13 @@ class UI(QMainWindow):
 
     def save_file(self):
         filepath = QFileDialog.getSaveFileName(self, 'Save File As')[0]
-        try:
-            imageio.imsave(filepath, self.image_array)
-            self.status_bar.showMessage(f"Image saved: {filepath.split()[-1]}")
-        except:
-            self.status_bar.showMessage(f"Can not save image")
+        # try:
+        #     imageio.imsave(filepath, self.image_array)
+        #     self.status_bar.showMessage(f"Image saved: {filepath.split()[-1]}")
+        # except Exception as e:
+        #     print(e)
+        #     self.status_bar.showMessage(f"Can not save image")
+        imageio.imsave(filepath, self.image_array)
 
 
     def open_image(self):
