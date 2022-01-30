@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
 # imageio is distributed under the terms of the (new) BSD License.
-
 
 """ BPG plugin to load and save in bpg format.
     Format created to use HEVC encoding and decoding intra frame to encode and decode images.
@@ -14,7 +12,7 @@ import numpy as np
 from imageio import formats
 from imageio.core import Format
 
-from ctypes import CDLL, Structure, c_int, c_uint8, POINTER, c_char_p, pointer
+from ctypes import CDLL, Structure, c_int, POINTER, c_char_p, pointer
 from sys import platform
 
 
