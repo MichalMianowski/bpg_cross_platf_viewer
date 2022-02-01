@@ -23,7 +23,7 @@ int save_bpg_image_with_defaults(DecodedImage *decoded_image);
 * typedef struct DecodedImage
 * {
 *     int w, h, pixel_len, has_alpha, is_grayscale;
-*     int * image_array;
+*     int * raw_data;
 * } DecodedImage;
 *
 * int save_bpg_image(DecodedImage *decoded_image, char *outfilename, int qp, 

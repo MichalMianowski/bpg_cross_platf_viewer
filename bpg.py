@@ -30,7 +30,7 @@ class DecodedImage(Structure):
 def load_lib():
     shared_lib_path = "./bpg_load_save_lib.so"
     if platform.startswith('win32'):
-        shared_lib_path = "./bpg_load_save_lib.dll"
+        shared_lib_path = ".\\bpg_load_save_lib.dll"
     try:
         lib = CDLL(shared_lib_path)
         # print("Successfully loaded ", lib)
@@ -168,7 +168,6 @@ class BpgFormat(Format):
 
         def _append_data(self, im, meta):
             self._decoded_image = DecodedImage()
-
             h = im.shape[0]
             w = im.shape[1]
 

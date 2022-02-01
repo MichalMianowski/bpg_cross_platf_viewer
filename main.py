@@ -38,7 +38,7 @@ class UI(QMainWindow):
         self.show()
 
     def open_file(self):
-        fname = QFileDialog.getOpenFileName(self, "Open File", "All (*)")
+        fname = QFileDialog.getOpenFileName(self, "Open File")
         parent_directory = os.path.split(fname[0])
         if fname != ('', ''):
             if (self.list_of_files):
