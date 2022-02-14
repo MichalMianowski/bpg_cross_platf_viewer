@@ -30,7 +30,7 @@ class DecodedImage(Structure):
 def load_lib():
     shared_lib_path = "./bpg_load_save_lib.so"
     if platform.startswith('win32'):
-        shared_lib_path = ".\\bpg_load_save_lib.dll"
+        shared_lib_path = "./bpg_load_save_lib.dll"
     try:
         lib = CDLL(shared_lib_path)
         # print("Successfully loaded ", lib)
@@ -40,7 +40,7 @@ def load_lib():
     # arg:  str(FILEPATH).encode("utf_8")
     lib.load_bpg_image.restype = DecodedImage
 
-    lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int]
+    lib.save_bpg_image.argtype = [POINTER(DecodedImage), c_char_p, c_int, c_int, c_int, c_int, c_int]
     lib.save_bpg_image_with_defaults.argtype = [POINTER(DecodedImage)]
 
     return lib
@@ -70,6 +70,15 @@ class BpgFormat(Format):
     preferred_chroma_format : int
         set preferred chroma format for output file
         possible values: 444, 422 or 420
+        default = 444
+    color_space : int
+        set output color space
+        0 - YCbCr
+        1 - RGB
+        2 - YCgCo
+        3 - YCbCr_BT709
+        4 - YCbCr_BT2020
+        default = 0 (YCbCr)
     """
     
     lib = load_lib()
@@ -137,6 +146,15 @@ class BpgFormat(Format):
     preferred_chroma_format : int
         set preferred chroma format for output file
         possible values: 444, 422 or 420
+        default = 444
+    color_space : int
+        set output color space
+        0 - YCbCr
+        1 - RGB
+        2 - YCgCo
+        3 - YCbCr_BT709
+        4 - YCbCr_BT2020
+        default = 0 (YCbCr)
     """
     class Writer(Format.Writer):
         def _open(self, **kwargs):
@@ -146,7 +164,8 @@ class BpgFormat(Format):
             self.qp = 29
             self.lossless = 0
             self.compress_level = 8
-            self.preferred_chroma_format = 444
+            self.preferred_chroma_format = 420
+            self.color_space = 0
 
             if 'qp' in kwargs.keys():
                 if (kwargs['qp'] >=0) and (kwargs['qp'] <= 51):
@@ -160,6 +179,9 @@ class BpgFormat(Format):
             if 'preferred_chroma_format' in kwargs.keys():
                 if kwargs['preferred_chroma_format'] in {444, 422, 420}:
                     self.preferred_chroma_format = kwargs['preferred_chroma_format']
+            if 'color_space' in kwargs.keys():
+                if kwargs['color_space'] in {0, 1, 2, 3, 4}:
+                    self.color_space = kwargs['color_space']
 
         def _close(self):
             # Close the reader.
@@ -204,7 +226,7 @@ class BpgFormat(Format):
             self._decoded_image.raw_data = c_decoded_array.ctypes.data_as(POINTER(c_int))
 
             BpgFormat.lib.save_bpg_image(pointer(self._decoded_image), self.c_outfilename, self.qp,
-                                         self.lossless, self.compress_level, self.preferred_chroma_format)
+                                         self.lossless, self.compress_level, self.preferred_chroma_format, self.color_space)
             # BpgFormat.lib.save_bpg_image_with_defaults(pointer(self._decoded_image))
 
     def set_meta_data(self, meta):
