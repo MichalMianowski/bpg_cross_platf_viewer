@@ -164,7 +164,7 @@ class BpgFormat(Format):
             self.qp = 29
             self.lossless = 0
             self.compress_level = 8
-            self.preferred_chroma_format = 444
+            self.preferred_chroma_format = 420
             self.color_space = 0
 
             if 'qp' in kwargs.keys():
